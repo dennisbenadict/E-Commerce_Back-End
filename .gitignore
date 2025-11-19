@@ -1,0 +1,36 @@
+# Build
+bin/
+obj/
+out/
+
+# Visual Studio
+.vs/
+*.user
+*.userosscache
+*.suo
+
+# Logs
+*.log
+Logs/
+
+# NuGet
+*.nupkg
+packages/
+*.snk
+.nuget/
+
+# Config
+appsettings.Development.json
+appsettings.Local.json
+
+# Docker
+docker-compose.override.yml
+docker-data/
+docker/db-data/
+
+# Angular
+node_modules/
+dist/
+
+# Other
+.env
