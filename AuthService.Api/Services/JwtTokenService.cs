@@ -21,11 +21,11 @@ public class JwtTokenService : IJwtTokenService
         var key = Encoding.UTF8.GetBytes(_config["Jwt:Key"]!);
 
         var claims = new List<Claim>
-        {
-            new Claim(JwtRegisteredClaimNames.Sub, userId.ToString()),
-            new Claim(JwtRegisteredClaimNames.Email, email),
-            new Claim("isAdmin", isAdmin.ToString())
-        };
+{
+    new Claim(ClaimTypes.NameIdentifier, userId.ToString()),
+    new Claim(ClaimTypes.Email, email),
+    new Claim(ClaimTypes.Role, isAdmin ? "Admin" : "User")  // ? IMPORTANT
+};
 
         var token = new JwtSecurityToken(
             issuer: _config["Jwt:Issuer"],

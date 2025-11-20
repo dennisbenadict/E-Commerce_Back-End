@@ -12,12 +12,10 @@ public class LoginHandler
         _repo = repo;
     }
 
-    public async Task<User?> ValidateAsync(string email, string passwordHash)
+    public async Task<User?> GetUserByEmailAsync(string email)
     {
-        var user = await _repo.GetByEmailAsync(email);
-        if (user == null) return null;
-
-        return user.PasswordHash == passwordHash ? user : null;
+        return await _repo.GetByEmailAsync(email);
     }
 }
+
 

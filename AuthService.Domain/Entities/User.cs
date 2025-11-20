@@ -9,5 +9,7 @@ public class User
     public string PasswordHash { get; set; } = "";
     public bool IsAdmin { get; set; }
     public DateTime CreatedAt { get; set; }
+    public bool IsBlocked { get; set; }
+
 }
 
