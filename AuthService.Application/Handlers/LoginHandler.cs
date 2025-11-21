@@ -1,5 +1,6 @@
 using AuthService.Application.Interfaces;
 using AuthService.Domain.Entities;
+using System.Threading.Tasks;
 
 namespace AuthService.Application.Handlers;
 
@@ -17,5 +18,6 @@ public class LoginHandler
         return await _repo.GetByEmailAsync(email);
     }
 }
+
 
 

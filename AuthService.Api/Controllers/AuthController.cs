@@ -1,7 +1,8 @@
 using AuthService.Application.DTOs;
 using AuthService.Application.Handlers;
 using AuthService.Application.Services;
-using AuthService.Infrastructure.Security;
+using AuthService.Application.Interfaces;
+using AuthService.Domain.Utils;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
@@ -16,17 +17,23 @@ public class AuthController : ControllerBase
     private readonly LoginHandler _login;
     private readonly UserManagementHandler _users;
     private readonly IJwtTokenService _tokenService;
+    private readonly RefreshTokenService _refreshService;
+    private readonly IUserRepository _userRepo;
 
     public AuthController(
         RegisterHandler register,
         LoginHandler login,
         IJwtTokenService tokenService,
-        UserManagementHandler users)
+        UserManagementHandler users,
+        RefreshTokenService refreshService,
+        IUserRepository userRepo)
     {
         _register = register;
         _login = login;
         _tokenService = tokenService;
         _users = users;
+        _refreshService = refreshService;
+        _userRepo = userRepo;
     }
 
 
@@ -35,7 +42,13 @@ public class AuthController : ControllerBase
     {
         var hash = PasswordHasher.Hash(dto.Password);
 
-        await _register.ExecuteAsync(dto.Name, dto.Phone, dto.Email, hash);
+        await _register.ExecuteAsync(
+            dto.Name.Trim(),
+            dto.Phone.Trim(),
+            dto.Email.Trim().ToLowerInvariant(),
+            hash
+        );
+
         return Ok(new { message = "Registered successfully" });
     }
 
@@ -43,16 +56,94 @@ public class AuthController : ControllerBase
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginDto dto)
     {
-        var user = await _login.GetUserByEmailAsync(dto.Email);
+        var user = await _login.GetUserByEmailAsync(dto.Email.Trim().ToLowerInvariant());
         if (user == null)
             return Unauthorized(new { message = "Invalid credentials" });
 
-        bool isPasswordValid = PasswordHasher.Verify(dto.Password, user.PasswordHash);
-        if (!isPasswordValid)
+        if (!PasswordHasher.Verify(dto.Password, user.PasswordHash))
             return Unauthorized(new { message = "Invalid credentials" });
 
-        var token = _tokenService.GenerateToken(user.Id, user.Email, user.IsAdmin);
-        return Ok(new { token });
+        if (user.IsBlocked)
+            return Forbid();
+
+        var accessToken = _tokenService.GenerateToken(user.Id, user.Email, user.IsAdmin);
+
+        var (rawRefresh, refreshEntity) = await _refreshService.CreateRefreshTokenAsync(user.Id);
+
+        bool isDev = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development";
+
+        Response.Cookies.Append("refresh_token", rawRefresh, new CookieOptions
+        {
+            HttpOnly = true,
+            Secure = true,
+            SameSite = SameSiteMode.None,
+            Expires = refreshEntity.ExpiresAt,
+            Path = "/"
+        });
+
+        return Ok(new { accessToken });
+    }
+
+
+    [HttpPost("refresh")]
+    public async Task<IActionResult> Refresh()
+    {
+        var raw = Request.Cookies["refresh_token"];
+        if (string.IsNullOrEmpty(raw))
+            return Unauthorized(new { message = "No refresh token provided" });
+
+        var existing = await _refreshService.GetByRawTokenAsync(raw);
+
+        if (existing == null || !existing.IsActive)
+            return Unauthorized(new { message = "Invalid or expired refresh token" });
+
+        await _refreshService.RevokeAsync(existing);
+
+        var (newRaw, newEntity) = await _refreshService.CreateRefreshTokenAsync(existing.UserId);
+
+        var user = await _userRepo.GetByIdAsync(existing.UserId);
+        if (user == null || user.IsBlocked)
+            return Unauthorized(new { message = "User not found or blocked" });
+
+        var newAccess = _tokenService.GenerateToken(user.Id, user.Email, user.IsAdmin);
+
+        bool isDev = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development";
+
+        Response.Cookies.Append("refresh_token", newRaw, new CookieOptions
+        {
+            HttpOnly = true,
+            Secure = true,
+            SameSite = SameSiteMode.None,
+            Expires = newEntity.ExpiresAt,
+            Path = "/"
+        });
+
+        return Ok(new { accessToken = newAccess });
+    }
+
+
+    [HttpPost("logout")]
+    public async Task<IActionResult> Logout()
+    {
+        var raw = Request.Cookies["refresh_token"];
+
+        if (!string.IsNullOrEmpty(raw))
+        {
+            var existing = await _refreshService.GetByRawTokenAsync(raw);
+
+            if (existing != null && existing.IsActive)
+                await _refreshService.RevokeAsync(existing);
+
+            Response.Cookies.Append("refresh_token", "", new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = false,
+                Expires = DateTime.UtcNow.AddDays(-1),
+                Path = "/api/auth/refresh"
+            });
+        }
+
+        return Ok(new { message = "Logged out" });
     }
 
 
@@ -76,15 +167,14 @@ public class AuthController : ControllerBase
         return Ok(await _users.GetAllUsersAsync());
     }
 
-
     [Authorize(Roles = "Admin")]
     [HttpPost("block/{userId}")]
     public async Task<IActionResult> BlockUser(int userId)
     {
         await _users.BlockUserAsync(userId);
+        await _refreshService.RevokeAllForUserAsync(userId); // block tokens
         return Ok(new { message = "User blocked" });
     }
-
 
     [Authorize(Roles = "Admin")]
     [HttpPost("unblock/{userId}")]
@@ -94,7 +184,6 @@ public class AuthController : ControllerBase
         return Ok(new { message = "User unblocked" });
     }
 
-
     [Authorize(Roles = "Admin")]
     [HttpPost("make-admin/{userId}")]
     public async Task<IActionResult> MakeAdmin(int userId)
@@ -102,7 +191,6 @@ public class AuthController : ControllerBase
         await _users.MakeAdminAsync(userId);
         return Ok(new { message = "User promoted to Admin" });
     }
-
 
     [Authorize(Roles = "Admin")]
     [HttpPost("remove-admin/{userId}")]
@@ -112,4 +200,6 @@ public class AuthController : ControllerBase
         return Ok(new { message = "Admin role removed" });
     }
 }
+
+
 

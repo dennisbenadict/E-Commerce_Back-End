@@ -61,6 +61,7 @@ builder.Services.AddDbContext<AuthDbContext>(options =>
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<RegisterHandler>();
 builder.Services.AddScoped<LoginHandler>();
+builder.Services.AddScoped<RefreshTokenService>();
 builder.Services.AddScoped<UserManagementHandler>();
 builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
 builder.Services.AddTransient<ExceptionMiddleware>();

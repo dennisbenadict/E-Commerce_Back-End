@@ -75,6 +75,37 @@ namespace AuthService.Infrastructure.Repositories
             user.IsAdmin = false;
             await _context.SaveChangesAsync();
         }
+        public async Task AddRefreshTokenAsync(RefreshToken token)
+        {
+            await _context.RefreshTokens.AddAsync(token);
+        }
+
+        public async Task<RefreshToken?> GetRefreshTokenAsync(string tokenHash)
+        {
+            return await _context.RefreshTokens
+                .FirstOrDefaultAsync(r => r.Token == tokenHash);
+        }
+
+
+        public async Task RevokeRefreshTokenAsync(RefreshToken token)
+        {
+            token.RevokedAt = DateTime.UtcNow;
+            _context.RefreshTokens.Update(token);
+        }
+
+        public async Task RevokeAllRefreshTokensForUserAsync(int userId)
+        {
+            var tokens = await _context.RefreshTokens
+                .Where(r => r.UserId == userId && r.RevokedAt == null)
+                .ToListAsync();
+
+            foreach (var t in tokens)
+                t.RevokedAt = DateTime.UtcNow;
+
+            _context.RefreshTokens.UpdateRange(tokens);
+        }
+
+
     }
 }
 
