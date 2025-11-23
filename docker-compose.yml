@@ -17,7 +17,7 @@ services:
   authservice:
     build:
       context: .
-      dockerfile: AuthService.Api/Dockerfile
+      dockerfile: AuthService/AuthService.Api/Dockerfile
     container_name: authservice
     depends_on:
       - sqlserver
@@ -26,7 +26,7 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - ConnectionStrings__DefaultConnection=Server=sqlserver,1433;Database=AuthDb;User Id=sa;Password=YourStrong!Pass123;TrustServerCertificate=True;
-      - Jwt__Key=THIS_IS_A_SECRET_KEY_CHANGE_IT
+      - Jwt__Key=THIS_IS_A_LONG_SUPER_SECRET_KEY_1234567890_ABCDEF
       - Jwt__Issuer=authservice
       - Jwt__Audience=auth_clients
     networks:
