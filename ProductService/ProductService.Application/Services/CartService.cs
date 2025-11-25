@@ -1,60 +1,72 @@
 using ProductService.Application.Interfaces;
 using ProductService.Domain.Entities;
 
-namespace ProductService.Application.Services
+namespace ProductService.Application.Services;
+
+public class CartService
 {
-    public class CartService
+    private readonly ICartRepository _cartRepo;
+    private readonly IProductRepository _productRepo;
+
+    public CartService(ICartRepository cartRepo, IProductRepository productRepo)
     {
-        private readonly ICartRepository _repo;
-        private readonly IProductRepository _productRepo;
+        _cartRepo = cartRepo;
+        _productRepo = productRepo;
+    }
 
-        public CartService(ICartRepository repo, IProductRepository productRepo)
+    public async Task<Cart> AddToCartAsync(int userId, int productId, int qty)
+    {
+        var product = await _productRepo.GetByIdAsync(productId);
+        if (product == null)
+            throw new Exception("Product not found");
+
+        var cart = await _cartRepo.GetCartByUserIdAsync(userId);
+
+        if (cart == null)
         {
-            _repo = repo;
-            _productRepo = productRepo;
+            cart = new Cart { UserId = userId };
+            await _cartRepo.CreateCartAsync(cart);
+            await _cartRepo.SaveChangesAsync();
         }
 
-        public async Task<Cart?> GetUserCartAsync(int userId)
+        var existingItem = await _cartRepo.GetCartItemAsync(cart.Id, productId);
+
+        if (existingItem != null)
         {
-            return await _repo.GetUserCartAsync(userId);
+            existingItem.Quantity += qty;
+            await _cartRepo.UpdateCartItemAsync(existingItem);
         }
-
-        public async Task AddToCartAsync(int userId, int productId, int qty)
+        else
         {
-            var product = await _productRepo.GetByIdAsync(productId);
-            if (product == null) throw new Exception("Product not found");
-
-            var cart = await _repo.GetUserCartAsync(userId);
-
-            if (cart == null)
+            var newItem = new CartItem
             {
-                cart = new Cart
-                {
-                    UserId = userId,
-                    Items = new List<CartItem>()
-                };
-            }
-
-            cart.Items.Add(new CartItem
-            {
+                CartId = cart.Id,
                 ProductId = productId,
-                Quantity = qty,
-                CartId = cart.Id
-            });
+                Quantity = qty
+            };
 
-            await _repo.SaveChangesAsync();
+            await _cartRepo.AddCartItemAsync(newItem);
         }
 
-        public async Task RemoveItemAsync(int itemId)
-        {
-            await _repo.RemoveItemAsync(itemId);
-            await _repo.SaveChangesAsync();
-        }
+        await _cartRepo.SaveChangesAsync();
+        return cart;
+    }
 
-        public async Task ClearCartAsync(int cartId)
-        {
-            await _repo.ClearCartAsync(cartId);
-            await _repo.SaveChangesAsync();
-        }
+    public async Task<Cart?> GetCartAsync(int userId)
+    {
+        return await _cartRepo.GetCartByUserIdAsync(userId);
+    }
+
+    public async Task RemoveItemAsync(int userId, int productId)
+    {
+        var cart = await _cartRepo.GetCartByUserIdAsync(userId);
+        if (cart == null) return;
+
+        var item = await _cartRepo.GetCartItemAsync(cart.Id, productId);
+        if (item == null) return;
+
+        await _cartRepo.RemoveCartItemAsync(item);
+        await _cartRepo.SaveChangesAsync();
     }
 }
+

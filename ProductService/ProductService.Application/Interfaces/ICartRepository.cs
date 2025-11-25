@@ -1,14 +1,17 @@
 using ProductService.Domain.Entities;
 
-namespace ProductService.Application.Interfaces
-{
-	public interface ICartRepository
-	{
-		Task<Cart?> GetUserCartAsync(int userId);
-		Task AddItemAsync(CartItem item);
-		Task RemoveItemAsync(int itemId);
-		Task ClearCartAsync(int cartId);
+namespace ProductService.Application.Interfaces;
 
-		Task SaveChangesAsync();
-	}
+public interface ICartRepository
+{
+    Task<Cart?> GetCartByUserIdAsync(int userId);
+    Task CreateCartAsync(Cart cart);
+
+    Task<CartItem?> GetCartItemAsync(int cartId, int productId);
+    Task AddCartItemAsync(CartItem item);
+    Task UpdateCartItemAsync(CartItem item);
+    Task RemoveCartItemAsync(CartItem item);
+
+    Task SaveChangesAsync();
 }
+
