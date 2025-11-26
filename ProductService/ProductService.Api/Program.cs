@@ -26,7 +26,7 @@ builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
 builder.Services.AddScoped<ICartRepository, CartRepository>();
 builder.Services.AddScoped<IOrderRepository, OrderRepository>();
 
-builder.Services.AddScoped<ProductService>();
+builder.Services.AddScoped<ProductService.Application.Services.ProductService>();
 builder.Services.AddScoped<CategoryService>();
 builder.Services.AddScoped<CartService>();
 builder.Services.AddScoped<OrderService>();

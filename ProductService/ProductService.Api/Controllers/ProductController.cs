@@ -9,8 +9,8 @@ namespace ProductService.Api.Controllers;
 [Route("api/products")]
 public class ProductController : ControllerBase
 {
-    private readonly ProductService _service;
-    public ProductController(ProductService service) => _service = service;
+    private readonly ProductService.Application.Services.ProductService _service;
+    public ProductController(ProductService.Application.Services.ProductService service) => _service = service;
 
     [HttpGet]
     public async Task<IActionResult> GetAll() => Ok(await _service.GetAllAsync());
