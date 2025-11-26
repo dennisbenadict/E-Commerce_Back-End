@@ -1,15 +1,18 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 using ProductService.Infrastructure.Models;
-using ProductService.Application.Services;
 using ProductService.Application.Interfaces;
 using ProductService.Infrastructure.Repositories;
+using ProductService.Application.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add Controllers
+// Controllers
 builder.Services.AddControllers();
 
-// Swagger / OpenAPI
+// Swagger
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
@@ -17,31 +20,54 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddDbContext<ProductDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// Repository DI
+// Dependency Injection
 builder.Services.AddScoped<IProductRepository, ProductRepository>();
 builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
 builder.Services.AddScoped<ICartRepository, CartRepository>();
 builder.Services.AddScoped<IOrderRepository, OrderRepository>();
 
-// Services DI
-builder.Services.AddScoped<ProductService.Application.Services.ProductService>();
+builder.Services.AddScoped<ProductService>();
 builder.Services.AddScoped<CategoryService>();
 builder.Services.AddScoped<CartService>();
 builder.Services.AddScoped<OrderService>();
 
-
-// CORS (Recommended for Angular/React client later)
+// CORS for Angular
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowClient",
-        policy => policy.AllowAnyOrigin()
-                        .AllowAnyMethod()
-                        .AllowAnyHeader());
+    options.AddPolicy("AllowClient", p =>
+        p.AllowAnyOrigin()
+         .AllowAnyMethod()
+         .AllowAnyHeader());
 });
+
+// =========================
+// 🔥 JWT Authentication Setup
+// =========================
+var jwtKey = builder.Configuration["Jwt:Key"];
+var issuer = builder.Configuration["Jwt:Issuer"];
+var audience = builder.Configuration["Jwt:Audience"];
+
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = issuer,
+            ValidAudience = audience,
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey))
+        };
+    });
+
+
+builder.Services.AddAuthorization();
 
 var app = builder.Build();
 
-// Swagger UI
+// Swagger
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -49,9 +75,17 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+// Authentication + Authorization
+app.UseAuthentication();
+app.UseAuthorization();
+
+// CORS
 app.UseCors("AllowClient");
 
+// Controllers
 app.MapControllers();
 
+// FINAL RUN — only once
 app.Run();
 

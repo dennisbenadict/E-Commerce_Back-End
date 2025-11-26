@@ -1,7 +1,7 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ProductService.Application.DTOs;
 using ProductService.Application.Services;
-using ProductService.Domain.Entities;
 
 namespace ProductService.Api.Controllers;
 
@@ -10,12 +10,10 @@ namespace ProductService.Api.Controllers;
 public class ProductController : ControllerBase
 {
     private readonly ProductService _service;
-
     public ProductController(ProductService service) => _service = service;
 
     [HttpGet]
-    public async Task<IActionResult> GetAll() =>
-        Ok(await _service.GetAllAsync());
+    public async Task<IActionResult> GetAll() => Ok(await _service.GetAllAsync());
 
     [HttpGet("{id:int}")]
     public async Task<IActionResult> Get(int id)
@@ -25,49 +23,34 @@ public class ProductController : ControllerBase
         return Ok(product);
     }
 
+    // Admin only
     [HttpPost]
-    public async Task<IActionResult> Create([FromBody] ProductDto dto)
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> Create([FromBody] CreateProductDto dto)
     {
-        var p = new Product
-        {
-            Name = dto.Name,
-            Description = dto.Description,
-            Price = dto.Price,
-            CategoryId = dto.CategoryId,
-            Sizes = dto.Sizes,
-            ImageUrls = dto.ImageUrls,
-            Gender = dto.Gender
-        };
-
-        var created = await _service.CreateAsync(p);
+        var created = await _service.CreateAsync(dto);
         return CreatedAtAction(nameof(Get), new { id = created.Id }, created);
     }
 
     [HttpPut("{id:int}")]
-    public async Task<IActionResult> Update(int id, [FromBody] ProductDto dto)
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> Update(int id, [FromBody] UpdateProductDto dto)
     {
-        var p = new Product
-        {
-            Id = id,
-            Name = dto.Name,
-            Description = dto.Description,
-            Price = dto.Price,
-            CategoryId = dto.CategoryId,
-            Sizes = dto.Sizes,
-            ImageUrls = dto.ImageUrls,
-            Gender = dto.Gender
-        };
-
-        var updated = await _service.UpdateAsync(p);
+        var updated = await _service.UpdateAsync(id, dto);
         if (updated == null) return NotFound();
         return Ok(updated);
     }
 
     [HttpDelete("{id:int}")]
-    public async Task<IActionResult> Delete(int id)
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> Delete(int id, [FromQuery] bool hard = true)
     {
-        var ok = await _service.DeleteAsync(id);
+        var ok = await _service.DeleteAsync(id, hard);
         if (!ok) return NotFound();
         return NoContent();
     }
+
+    [HttpGet("category/{catId:int}")]
+    public async Task<IActionResult> GetByCategory(int catId)
+        => Ok(await _service.GetByCategoryAsync(catId));
 }

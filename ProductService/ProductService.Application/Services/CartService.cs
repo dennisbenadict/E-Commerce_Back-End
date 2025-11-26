@@ -16,9 +16,11 @@ public class CartService
 
     public async Task<Cart> AddToCartAsync(int userId, int productId, int qty)
     {
+        if (qty <= 0) throw new ArgumentException("Quantity must be > 0");
+
         var product = await _productRepo.GetByIdAsync(productId);
-        if (product == null)
-            throw new Exception("Product not found");
+        if (product == null || !product.IsActive)
+            throw new Exception("Product not found or inactive");
 
         var cart = await _cartRepo.GetCartByUserIdAsync(userId);
 
@@ -44,12 +46,13 @@ public class CartService
                 ProductId = productId,
                 Quantity = qty
             };
-
             await _cartRepo.AddCartItemAsync(newItem);
         }
 
         await _cartRepo.SaveChangesAsync();
-        return cart;
+
+        // reload cart with product navigation
+        return await _cartRepo.GetCartByUserIdAsync(userId) ?? cart;
     }
 
     public async Task<Cart?> GetCartAsync(int userId)
@@ -69,4 +72,3 @@ public class CartService
         await _cartRepo.SaveChangesAsync();
     }
 }
-

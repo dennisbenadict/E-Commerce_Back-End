@@ -1,5 +1,4 @@
 ﻿namespace ProductService.Domain.Entities;
-
 using System.Collections.Generic;
 
 public class Product
@@ -12,11 +11,15 @@ public class Product
     public int CategoryId { get; set; }
     public Category Category { get; set; } = null!;
 
-    public List<ProductImage> Images { get; set; } = new();
-    public List<ProductSize> Sizes { get; set; } = new();
+    public List<string> ImageUrls { get; set; } = new();
+    public List<string> Sizes { get; set; } = new();
 
-    public string Gender { get; set; } = null!; // Men, Women, Unisex
+    public string Gender { get; set; } = "Unisex";
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+    public bool IsActive { get; set; } = true;
+    public bool IsDeleted { get; set; } = false;
 }
+
 
 
