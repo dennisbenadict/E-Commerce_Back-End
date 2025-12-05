@@ -1,0 +1,40 @@
+
+
+services:
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: sqlserver
+    environment:
+      - ACCEPT_EULA=Y
+      - SA_PASSWORD=YourStrong!Pass123
+    ports:
+      - "1433:1433"
+    networks:
+      - ecommerce-net
+    volumes:
+      - sql_data:/var/opt/mssql
+
+  authservice:
+    build:
+      context: .
+      dockerfile: AuthService/AuthService.Api/Dockerfile
+    container_name: authservice
+    depends_on:
+      - sqlserver
+    ports:
+      - "5067:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Server=sqlserver,1433;Database=AuthDb;User Id=sa;Password=YourStrong!Pass123;TrustServerCertificate=True;
+      - Jwt__Key=THIS_IS_A_LONG_SUPER_SECRET_KEY_1234567890_ABCDEF
+      - Jwt__Issuer=authservice
+      - Jwt__Audience=auth_clients
+    networks:
+      - ecommerce-net
+
+networks:
+  ecommerce-net:
+    driver: bridge
+
+volumes:
+  sql_data:
