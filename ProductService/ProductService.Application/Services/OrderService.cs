@@ -76,6 +76,7 @@ public class OrderService
             UserId = o.UserId,
             CreatedAt = o.CreatedAt,
             TotalAmount = o.TotalAmount,
+            Status = o.Status,
             Items = o.Items.Select(i => new OrderItemDto
             {
                 ProductId = i.ProductId,
