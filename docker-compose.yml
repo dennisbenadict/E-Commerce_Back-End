@@ -1,5 +1,3 @@
-
-
 services:
   sqlserver:
     image: mcr.microsoft.com/mssql/server:2022-latest
@@ -32,9 +30,29 @@ services:
     networks:
       - ecommerce-net
 
+  productservice:
+    build:
+      context: .
+      dockerfile: ProductService/ProductService.Api/Dockerfile
+    container_name: productservice
+    depends_on:
+      - sqlserver
+      - authservice
+    ports:
+      - "5214:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Server=sqlserver,1433;Database=ProductDb;User Id=sa;Password=YourStrong!Pass123;TrustServerCertificate=True;
+      - Jwt__Key=THIS_IS_A_LONG_SUPER_SECRET_KEY_1234567890_ABCDEF
+      - Jwt__Issuer=authservice
+      - Jwt__Audience=auth_clients
+    networks:
+      - ecommerce-net
+
 networks:
   ecommerce-net:
     driver: bridge
 
 volumes:
   sql_data:
+
