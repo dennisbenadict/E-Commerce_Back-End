@@ -13,6 +13,7 @@ public class OrderRepository : IOrderRepository
     public async Task<Order?> GetByIdAsync(int id)
     {
         return await _db.Orders
+            .AsNoTracking()
             .Include(o => o.Items)
                 .ThenInclude(i => i.Product)
             .FirstOrDefaultAsync(o => o.Id == id);
@@ -21,6 +22,7 @@ public class OrderRepository : IOrderRepository
     public async Task<IEnumerable<Order>> GetUserOrdersAsync(int userId)
     {
         return await _db.Orders
+            .AsNoTracking()
             .Where(o => o.UserId == userId)
             .Include(o => o.Items)
                 .ThenInclude(i => i.Product)
@@ -30,6 +32,7 @@ public class OrderRepository : IOrderRepository
     public async Task<IEnumerable<Order>> GetAllOrdersAsync()
     {
         return await _db.Orders
+            .AsNoTracking()
             .Include(o => o.Items)
                 .ThenInclude(i => i.Product)
             .ToListAsync();

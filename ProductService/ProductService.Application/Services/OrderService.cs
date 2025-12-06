@@ -39,14 +39,10 @@ public class OrderService
         var cart = await _cartRepo.GetCartByUserIdAsync(userId);
         if (cart == null || !cart.Items.Any()) throw new Exception("Cart is empty");
 
-        // ensure product prices are loaded
         foreach (var i in cart.Items)
         {
             if (i.Product == null)
             {
-                // attempt to reload product
-                // this usually shouldn't happen because repository includes product,
-                // but we keep safe-guard
                 throw new Exception("Product info missing for cart item");
             }
         }

@@ -52,7 +52,6 @@ public class CartService
 
         await _cartRepo.SaveChangesAsync();
 
-        // reload with product navigation
         var updated = await _cartRepo.GetCartByUserIdAsync(userId) ?? cart;
 
         return MapToCartDto(updated);
@@ -80,22 +79,21 @@ public class CartService
 
     private CartDto MapToCartDto(Cart cart)
     {
+        var items = cart.Items.Select(i => new CartItemDto
+        {
+            ProductId = i.ProductId,
+            ProductName = i.Product.Name,
+            Price = i.Product.Price,
+            Quantity = i.Quantity,
+            ImageUrls = i.Product.ImageUrls
+        }).ToList();
+
         return new CartDto
         {
-            Id = cart.Id,
-            Items = cart.Items.Select(i => new CartItemDto
-            {
-                ProductId = i.ProductId,
-                Quantity = i.Quantity,
-                Product = new ProductDto
-                {
-                    Id = i.Product.Id,
-                    Name = i.Product.Name,
-                    Price = i.Product.Price,
-                    ImageUrls = i.Product.ImageUrls
-                }
-            }).ToList()
+            Items = items,
+            TotalAmount = items.Sum(x => x.Price * x.Quantity)
         };
     }
 }
+
 
