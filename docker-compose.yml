@@ -12,6 +12,15 @@ services:
     volumes:
       - sql_data:/var/opt/mssql
 
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"      
+      - "15672:15672"    
+    networks:
+      - ecommerce-net
+
   authservice:
     build:
       context: .
@@ -19,6 +28,7 @@ services:
     container_name: authservice
     depends_on:
       - sqlserver
+      - rabbitmq
     ports:
       - "5067:8080"
     environment:
@@ -38,6 +48,7 @@ services:
     depends_on:
       - sqlserver
       - authservice
+      - rabbitmq
     ports:
       - "5214:8080"
     environment:
@@ -55,4 +66,5 @@ networks:
 
 volumes:
   sql_data:
+
 
