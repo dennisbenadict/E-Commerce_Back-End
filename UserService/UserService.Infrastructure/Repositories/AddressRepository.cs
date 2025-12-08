@@ -19,11 +19,17 @@ public class AddressRepository : IAddressRepository
     public async Task AddAsync(Address address)
         => await _db.Addresses.AddAsync(address);
 
-    public async Task UpdateAsync(Address address)
-        => _db.Addresses.Update(address);
+    public Task UpdateAsync(Address address)
+    {
+        _db.Addresses.Update(address);
+        return Task.CompletedTask;
+    }
 
-    public async Task DeleteAsync(Address address)
-        => _db.Addresses.Remove(address);
+    public Task DeleteAsync(Address address)
+    {
+        _db.Addresses.Remove(address);
+        return Task.CompletedTask;
+    }
 
     public async Task SaveChangesAsync()
         => await _db.SaveChangesAsync();

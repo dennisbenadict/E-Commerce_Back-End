@@ -14,3 +14,4 @@ public class CreateAddressValidator : AbstractValidator<CreateAddressDto>
         RuleFor(x => x.Country).NotEmpty();
     }
 }
+

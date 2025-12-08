@@ -6,4 +6,6 @@ public interface IUserProfileService
 {
     Task<ProfileDto?> GetProfileAsync(int userId);
     Task<ProfileDto?> UpdateProfileAsync(int userId, UpdateProfileDto dto);
+    Task<bool> ChangePasswordAsync(int userId, ChangePasswordDto dto); 
 }
+

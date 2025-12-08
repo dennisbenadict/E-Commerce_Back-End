@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using UserService.Application.Interfaces;
 using UserService.Application.Services;
 using UserService.Infrastructure.Persistence;
@@ -21,9 +21,14 @@ public static class ServiceRegistration
         // Application services
         services.AddScoped<IUserProfileService, UserProfileService>();
         services.AddScoped<IAddressService, AddressService>();
+        services.AddSingleton<IPasswordHasher, BcryptPasswordHasher>();
 
-        // RabbitMQ producer (basic)
-        var rabbitHost = config.GetValue<string>("RabbitMq:Host") ?? "localhost";
-        services.AddSingleton(new RabbitMqProducer(rabbitHost));
+        // RabbitMQ → bind interface → pass host name correctly
+        services.AddSingleton<IEventProducer>(sp =>
+        {
+            var rabbitHost = config.GetValue<string>("RabbitMq:Host") ?? "localhost";
+            return new RabbitMqProducer(rabbitHost);
+        });
     }
 }
+

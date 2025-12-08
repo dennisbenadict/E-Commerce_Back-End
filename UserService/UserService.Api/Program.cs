@@ -9,10 +9,8 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// add user service layer registrations (db, repos, services, rabbit)
 builder.Services.AddUserService(builder.Configuration);
 
-// JWT (minimal)
 var key = Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"] ?? "default_secret_change_me");
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(opt =>
@@ -30,6 +28,12 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
 builder.Services.AddAuthorization();
 builder.Services.AddCors(p => p.AddPolicy("AllowClient", pb => pb.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod()));
+
+builder.Services.AddValidatorsFromAssembly(typeof(UpdateProfileValidator).Assembly);
+builder.Services.AddFluentValidationAutoValidation();
+builder.Services.AddFluentValidationClientsideAdapters();
+builder.Services.AddHostedService<UserRegisteredConsumer>();
+
 
 var app = builder.Build();
 

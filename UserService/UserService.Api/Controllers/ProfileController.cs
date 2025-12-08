@@ -52,5 +52,22 @@ public class ProfileController : ControllerBase
 
         return Ok(new { message = "Profile updated successfully", profile = updated });
     }
+
+    [HttpPut("change-password")]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> ChangePassword(ChangePasswordDto dto)
+    {
+        var userId = GetUserId();
+
+        var result = await _service.ChangePasswordAsync(userId, dto);
+
+        if (!result)
+            return BadRequest(new { message = "Current password is incorrect" });
+
+        return Ok(new { message = "Password changed successfully" });
+    }
+
 }
 
