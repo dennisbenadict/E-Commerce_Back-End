@@ -3,8 +3,20 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using RabbitMQ.Client;
 using UserService.Application.Interfaces;
+//using Microsoft.EntityFrameworkCore.Metadata;
 
 namespace UserService.Infrastructure.RabbitMQ;
+
+
+
+
+
+
+
+
+
+
+
 
 public class RabbitMqProducer : IEventProducer, IDisposable
 {
@@ -62,6 +74,7 @@ public class RabbitMqProducer : IEventProducer, IDisposable
             _connection?.Close();
         }
         catch { }
+        // ATHUL MERN STACK DEVELOPER....tHIS IS DOT net 
     }
 }
 
