@@ -3,7 +3,7 @@ using UserService.Application.Interfaces;
 using UserService.Application.Services;
 using UserService.Infrastructure.Persistence;
 using UserService.Infrastructure.Repositories;
-using UserService.Infrastructure.RabbitMQ;
+using UserService.Infrastructure.Security;
 
 namespace UserService.Api.Extensions;
 
