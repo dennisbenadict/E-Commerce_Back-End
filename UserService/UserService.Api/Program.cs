@@ -2,6 +2,9 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using UserService.Api.Extensions;
+using FluentValidation;
+using UserService.Application.Validators;
+using UserService.Api.Consumers;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -11,6 +14,7 @@ builder.Services.AddSwaggerGen();
 
 builder.Services.AddUserService(builder.Configuration);
 
+// JWT
 var key = Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"] ?? "default_secret_change_me");
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(opt =>
@@ -27,13 +31,17 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     });
 
 builder.Services.AddAuthorization();
-builder.Services.AddCors(p => p.AddPolicy("AllowClient", pb => pb.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod()));
 
+// CORS
+builder.Services.AddCors(p =>
+    p.AddPolicy("AllowClient", pb => pb.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod())
+);
+
+// VALIDATION – ONLY ONE VALID LINE IN FLUENTVALIDATION V11+
 builder.Services.AddValidatorsFromAssembly(typeof(UpdateProfileValidator).Assembly);
-builder.Services.AddFluentValidationAutoValidation();
-builder.Services.AddFluentValidationClientsideAdapters();
-builder.Services.AddHostedService<UserRegisteredConsumer>();
 
+// BACKGROUND CONSUMER
+builder.Services.AddHostedService<UserRegisteredConsumer>();
 
 var app = builder.Build();
 

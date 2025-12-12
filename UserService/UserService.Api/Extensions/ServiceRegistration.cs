@@ -4,6 +4,8 @@ using UserService.Application.Services;
 using UserService.Infrastructure.Persistence;
 using UserService.Infrastructure.Repositories;
 using UserService.Infrastructure.Security;
+using UserService.Infrastructure.RabbitMQ;
+
 
 namespace UserService.Api.Extensions;
 
