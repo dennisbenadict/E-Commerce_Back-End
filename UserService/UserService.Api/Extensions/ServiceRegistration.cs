@@ -28,7 +28,7 @@ public static class ServiceRegistration
         // RabbitMQ → bind interface → pass host name correctly
         services.AddSingleton<IEventProducer>(sp =>
         {
-            var rabbitHost = config.GetValue<string>("RabbitMq:Host") ?? "localhost";
+            var rabbitHost = config.GetValue<string>("RabbitMq:Host") ?? "rabbitmq";
             return new RabbitMqProducer(rabbitHost);
         });
     }
