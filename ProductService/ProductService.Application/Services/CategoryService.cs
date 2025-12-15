@@ -6,10 +6,12 @@ namespace ProductService.Application.Services
     public class CategoryService
     {
         private readonly ICategoryRepository _repo;
+        private readonly IEventProducer _producer;
 
-        public CategoryService(ICategoryRepository repo)
+        public CategoryService(ICategoryRepository repo, IEventProducer producer)
         {
             _repo = repo;
+            _producer = producer;
         }
 
         public async Task<IEnumerable<Category>> GetAllAsync()
@@ -26,6 +28,13 @@ namespace ProductService.Application.Services
         {
             await _repo.AddAsync(category);
             await _repo.SaveChangesAsync();
+
+            await _producer.PublishAsync("category.created", new
+            {
+                category.Id,
+                category.Name,
+                Timestamp = DateTime.UtcNow
+            });
             return category;
         }
 
@@ -37,6 +46,11 @@ namespace ProductService.Application.Services
             await _repo.DeleteAsync(id);
             await _repo.SaveChangesAsync();
 
+            await _producer.PublishAsync("category.deleted", new
+            {
+                CategoryId = id,
+                Timestamp = DateTime.UtcNow
+            });
             return true;
         }
 
@@ -50,6 +64,12 @@ namespace ProductService.Application.Services
             await _repo.UpdateAsync(existing);
             await _repo.SaveChangesAsync();
 
+            await _producer.PublishAsync("category.updated", new
+            {
+                existing.Id,
+                existing.Name,
+                Timestamp = DateTime.UtcNow
+            });
             return existing;
         }
     }

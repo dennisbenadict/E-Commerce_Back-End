@@ -10,6 +10,8 @@ using ProductService.Api.Extensions;
 using ProductService.Application.Validators;
 using FluentValidation;
 using FluentValidation.AspNetCore;
+using ProductService.Infrastructure.RabbitMQ;
+using ProductService.Api.Consumers;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -59,6 +61,16 @@ builder.Services.AddSwaggerGen(c =>
 builder.Services.AddDbContext<ProductDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+// RabbitMQ producer
+builder.Services.AddSingleton<IEventProducer>(sp =>
+{
+    var config = sp.GetRequiredService<IConfiguration>();
+    var host = config["RabbitMq:Host"] ?? "rabbitmq";
+    var user = config["RabbitMq:User"] ?? "guest";
+    var password = config["RabbitMq:Password"] ?? "guest";
+    return new RabbitMqProducer(host, user, password);
+});
+
 // ===== JWT Authentication =====
 
 var key = Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!);
@@ -90,6 +102,10 @@ builder.Services.AddScoped<ProductService.Application.Services.ProductService>()
 builder.Services.AddScoped<CategoryService>();
 builder.Services.AddScoped<CartService>();
 builder.Services.AddScoped<OrderService>();
+
+// RabbitMQ Consumers
+builder.Services.AddHostedService<UserBlockedConsumer>();
+builder.Services.AddHostedService<UserUnblockedConsumer>();
 
 // CORS
 builder.Services.AddCors(options =>

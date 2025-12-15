@@ -29,6 +29,20 @@ namespace UserService.Application.Services
             var u = await _repo.GetByIdAsync(userId);
             if (u == null) return null;
 
+            // If profile has empty name/email/phone, request sync from AuthService
+            if (string.IsNullOrWhiteSpace(u.Name) && string.IsNullOrWhiteSpace(u.Email) && string.IsNullOrWhiteSpace(u.Phone))
+            {
+                _logger.LogInformation("Profile has empty credentials for UserId {UserId}. Requesting sync from AuthService.", userId);
+                
+                // Publish sync request event - AuthService will respond with user.data.synced
+                // The sync happens asynchronously via RabbitMQ, so user may need to refresh to see updated data
+                await _producer.PublishAsync("user.profile.sync.requested", new
+                {
+                    UserId = userId,
+                    Timestamp = DateTime.UtcNow
+                });
+            }
+
             return new ProfileDto
             {
                 Id = u.Id,
@@ -102,20 +116,38 @@ namespace UserService.Application.Services
             var user = await _repo.GetByIdAsync(userId);
             if (user == null) return false;
 
-            if (!_hasher.Verify(user.PasswordHash, dto.CurrentPassword))
+            // If password hash is missing (e.g., user created before sync was added),
+            // we allow password change but can't verify old password
+            // User is already authenticated via JWT, so this is acceptable
+            if (string.IsNullOrEmpty(user.PasswordHash))
             {
-                _logger.LogWarning("Password change failed for UserId {UserId}: wrong old password", userId);
-                return false;
+                _logger.LogWarning(
+                    "Password hash missing for UserId {UserId}. Allowing password change without old password verification (user is authenticated via JWT).",
+                    userId
+                );
+                // Proceed to set new password without verification
+            }
+            else
+            {
+                // Verify old password if hash exists
+                if (!_hasher.Verify(user.PasswordHash, dto.CurrentPassword))
+                {
+                    _logger.LogWarning("Password change failed for UserId {UserId}: wrong old password", userId);
+                    return false;
+                }
             }
 
+            // Hash and save new password
             user.PasswordHash = _hasher.Hash(dto.NewPassword);
 
             await _repo.UpdateAsync(user);
             await _repo.SaveChangesAsync();
 
+            // Sync new password hash to AuthService
             await _producer.PublishAsync("user.password.changed", new
             {
                 UserId = user.Id,
+                PasswordHash = user.PasswordHash,
                 Timestamp = DateTime.UtcNow
             });
 

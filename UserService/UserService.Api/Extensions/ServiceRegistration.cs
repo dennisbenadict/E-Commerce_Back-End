@@ -29,7 +29,9 @@ public static class ServiceRegistration
         services.AddSingleton<IEventProducer>(sp =>
         {
             var rabbitHost = config.GetValue<string>("RabbitMq:Host") ?? "rabbitmq";
-            return new RabbitMqProducer(rabbitHost);
+            var rabbitUser = config.GetValue<string>("RabbitMq:User") ?? "guest";
+            var rabbitPassword = config.GetValue<string>("RabbitMq:Password") ?? "guest";
+            return new RabbitMqProducer(rabbitHost, rabbitUser, rabbitPassword);
         });
     }
 }

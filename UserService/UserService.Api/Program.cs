@@ -37,7 +37,7 @@
 //    p.AddPolicy("AllowClient", pb => pb.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod())
 //);
 
-//// VALIDATION – ONLY ONE VALID LINE IN FLUENTVALIDATION V11+
+//// VALIDATION ï¿½ ONLY ONE VALID LINE IN FLUENTVALIDATION V11+
 //builder.Services.AddValidatorsFromAssembly(typeof(UpdateProfileValidator).Assembly);
 
 //// BACKGROUND CONSUMER
@@ -163,9 +163,10 @@ builder.Services.AddValidatorsFromAssembly(
 );
 
 // --------------------
-// RabbitMQ Consumer
+// RabbitMQ Consumers
 // --------------------
 builder.Services.AddHostedService<UserRegisteredConsumer>();
+builder.Services.AddHostedService<UserDataSyncedConsumer>();
 
 // ====================
 // BUILD APP

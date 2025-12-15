@@ -8,11 +8,13 @@ public class CartService
 {
     private readonly ICartRepository _cartRepo;
     private readonly IProductRepository _productRepo;
+    private readonly IEventProducer _producer;
 
-    public CartService(ICartRepository cartRepo, IProductRepository productRepo)
+    public CartService(ICartRepository cartRepo, IProductRepository productRepo, IEventProducer producer)
     {
         _cartRepo = cartRepo;
         _productRepo = productRepo;
+        _producer = producer;
     }
 
     public async Task<CartDto> AddToCartAsync(int userId, int productId, int qty)
@@ -54,6 +56,18 @@ public class CartService
 
         var updated = await _cartRepo.GetCartByUserIdAsync(userId) ?? cart;
 
+        await _producer.PublishAsync("cart.updated", new
+        {
+            CartId = updated.Id,
+            UserId = userId,
+            Items = updated.Items.Select(i => new
+            {
+                i.ProductId,
+                i.Quantity
+            }),
+            Timestamp = DateTime.UtcNow
+        });
+
         return MapToCartDto(updated);
     }
 
@@ -75,6 +89,14 @@ public class CartService
 
         await _cartRepo.RemoveCartItemAsync(item);
         await _cartRepo.SaveChangesAsync();
+
+        await _producer.PublishAsync("cart.updated", new
+        {
+            CartId = cart.Id,
+            UserId = userId,
+            RemovedProductId = productId,
+            Timestamp = DateTime.UtcNow
+        });
     }
 
     private CartDto MapToCartDto(Cart cart)

@@ -8,11 +8,13 @@ public class OrderService
 {
     private readonly IOrderRepository _repo;
     private readonly ICartRepository _cartRepo;
+    private readonly IEventProducer _producer;
 
-    public OrderService(IOrderRepository repo, ICartRepository cartRepo)
+    public OrderService(IOrderRepository repo, ICartRepository cartRepo, IEventProducer producer)
     {
         _repo = repo;
         _cartRepo = cartRepo;
+        _producer = producer;
     }
 
     public async Task<OrderResponseDto?> GetByIdAsync(int id)
@@ -65,6 +67,15 @@ public class OrderService
         await _cartRepo.ClearCartAsync(cart.Id);
         await _cartRepo.SaveChangesAsync();
 
+        await _producer.PublishAsync("order.created", new
+        {
+            order.Id,
+            order.UserId,
+            order.TotalAmount,
+            ItemCount = order.Items.Count,
+            Timestamp = DateTime.UtcNow
+        });
+
         return MapToDto(order);
     }
 
@@ -114,6 +125,13 @@ public class OrderService
 
         await _repo.UpdateOrderAsync(order);
         await _repo.SaveChangesAsync();
+
+        await _producer.PublishAsync("order.cancelled", new
+        {
+            order.Id,
+            order.UserId,
+            Timestamp = DateTime.UtcNow
+        });
 
         return true;
     }

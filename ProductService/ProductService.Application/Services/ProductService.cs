@@ -7,7 +7,13 @@ namespace ProductService.Application.Services;
 public class ProductService
 {
     private readonly IProductRepository _repo;
-    public ProductService(IProductRepository repo) => _repo = repo;
+    private readonly IEventProducer _producer;
+
+    public ProductService(IProductRepository repo, IEventProducer producer)
+    {
+        _repo = repo;
+        _producer = producer;
+    }
 
     public async Task<IEnumerable<ProductResponseDto>> GetAllAsync()
     {
@@ -45,6 +51,17 @@ public class ProductService
         await _repo.AddAsync(product);
         await _repo.SaveChangesAsync();
 
+        await _producer.PublishAsync("product.created", new
+        {
+            product.Id,
+            product.Name,
+            product.Description,
+            product.Price,
+            product.CategoryId,
+            product.IsActive,
+            Timestamp = DateTime.UtcNow
+        });
+
         return MapToResponse(product);
     }
 
@@ -65,6 +82,17 @@ public class ProductService
         await _repo.UpdateAsync(existing);
         await _repo.SaveChangesAsync();
 
+        await _producer.PublishAsync("product.updated", new
+        {
+            existing.Id,
+            existing.Name,
+            existing.Description,
+            existing.Price,
+            existing.CategoryId,
+            existing.IsActive,
+            Timestamp = DateTime.UtcNow
+        });
+
         return MapToResponse(existing);
     }
 
@@ -84,6 +112,13 @@ public class ProductService
         }
 
         await _repo.SaveChangesAsync();
+
+        await _producer.PublishAsync("product.deleted", new
+        {
+            ProductId = id,
+            HardDeleted = hardDelete,
+            Timestamp = DateTime.UtcNow
+        });
         return true;
     }
 

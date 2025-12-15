@@ -106,7 +106,11 @@ namespace AuthService.Infrastructure.Repositories
             _context.RefreshTokens.UpdateRange(tokens);
         }
 
-
+        public Task UpdateUserAsync(User user)
+        {
+            _context.Users.Update(user);
+            return Task.CompletedTask;
+        }
     }
 }
 

@@ -1,9 +1,9 @@
 using System.Text;
 using System.Text.Json;
+using AuthService.Application.Interfaces;
 using RabbitMQ.Client;
-using UserService.Application.Interfaces;
 
-namespace UserService.Infrastructure.RabbitMQ;
+namespace AuthService.Infrastructure.RabbitMQ;
 
 public class RabbitMqProducer : IEventProducer, IDisposable
 {
@@ -26,7 +26,7 @@ public class RabbitMqProducer : IEventProducer, IDisposable
 
     public Task PublishAsync(string exchangeName, object message)
     {
-        _channel.ExchangeDeclare(exchangeName, ExchangeType.Fanout, durable: true);
+        _channel.ExchangeDeclare(exchange: exchangeName, type: ExchangeType.Fanout, durable: true);
 
         var json = JsonSerializer.Serialize(message);
         var body = Encoding.UTF8.GetBytes(json);
@@ -36,10 +36,9 @@ public class RabbitMqProducer : IEventProducer, IDisposable
 
         _channel.BasicPublish(
             exchange: exchangeName,
-            routingKey: "",
+            routingKey: string.Empty,
             basicProperties: props,
-            body: body
-        );
+            body: body);
 
         return Task.CompletedTask;
     }
@@ -51,6 +50,10 @@ public class RabbitMqProducer : IEventProducer, IDisposable
             _channel?.Dispose();
             _connection?.Dispose();
         }
-        catch { }
+        catch
+        {
+            // swallow disposal exceptions
+        }
     }
 }
+

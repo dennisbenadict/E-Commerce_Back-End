@@ -115,18 +115,26 @@ public class UserRegisteredConsumer : BackgroundService
 {
     private readonly IServiceProvider _serviceProvider;
     private readonly ILogger<UserRegisteredConsumer> _logger;
+    private readonly string _host;
+    private readonly string _user;
+    private readonly string _password;
 
     private IConnection? _connection;
     private IModel? _channel;
 
-    private const string QueueName = "user.registered";
+    private const string ExchangeName = "user.registered";
+    private const string QueueName = "user-service.user.registered";
 
     public UserRegisteredConsumer(
         IServiceProvider serviceProvider,
-        ILogger<UserRegisteredConsumer> logger)
+        ILogger<UserRegisteredConsumer> logger,
+        IConfiguration configuration)
     {
         _serviceProvider = serviceProvider;
         _logger = logger;
+        _host = configuration["RabbitMq:Host"] ?? "rabbitmq";
+        _user = configuration["RabbitMq:User"] ?? "guest";
+        _password = configuration["RabbitMq:Password"] ?? "guest";
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -138,20 +146,32 @@ public class UserRegisteredConsumer : BackgroundService
             {
                 var factory = new ConnectionFactory
                 {
-                    HostName = "rabbitmq", // docker service name
-                    UserName = "guest",
-                    Password = "guest",
+                    HostName = _host,
+                    UserName = _user,
+                    Password = _password,
                     DispatchConsumersAsync = true
                 };
 
                 _connection = factory.CreateConnection();
                 _channel = _connection.CreateModel();
 
+                _channel.ExchangeDeclare(
+                    exchange: ExchangeName,
+                    type: ExchangeType.Fanout,
+                    durable: true
+                );
+
                 _channel.QueueDeclare(
                     queue: QueueName,
                     durable: true,
                     exclusive: false,
                     autoDelete: false
+                );
+
+                _channel.QueueBind(
+                    queue: QueueName,
+                    exchange: ExchangeName,
+                    routingKey: string.Empty
                 );
 
                 _logger.LogInformation(
@@ -177,7 +197,9 @@ public class UserRegisteredConsumer : BackgroundService
                         using var scope = _serviceProvider.CreateScope();
                         var service =
                             scope.ServiceProvider.GetRequiredService<IUserProfileService>();
+                        var repo = scope.ServiceProvider.GetRequiredService<IUserProfileRepository>();
 
+                        // Update or create profile
                         await service.UpdateProfileAsync(
                             message.UserId,
                             new UpdateProfileDto
@@ -187,6 +209,19 @@ public class UserRegisteredConsumer : BackgroundService
                                 Phone = message.Phone ?? ""
                             }
                         );
+
+                        // Sync password hash if provided
+                        if (!string.IsNullOrEmpty(message.PasswordHash))
+                        {
+                            var profile = await repo.GetByIdAsync(message.UserId);
+                            if (profile != null)
+                            {
+                                profile.PasswordHash = message.PasswordHash;
+                                await repo.UpdateAsync(profile);
+                                await repo.SaveChangesAsync();
+                                _logger.LogInformation("Password hash synced for UserId {UserId}", message.UserId);
+                            }
+                        }
 
                         _logger.LogInformation(
                             "User profile synced for UserId {UserId}",
@@ -239,4 +274,5 @@ public class UserRegisteredEvent
     public string? Name { get; set; }
     public string? Email { get; set; }
     public string? Phone { get; set; }
+    public string? PasswordHash { get; set; } // Password hash from AuthService
 }

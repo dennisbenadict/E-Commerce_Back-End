@@ -2,8 +2,10 @@ using AuthService.Api.Services;
 using AuthService.Application.Handlers;
 using AuthService.Application.Interfaces;
 using AuthService.Application.Services;
+using AuthService.Infrastructure.RabbitMQ;
 using AuthService.Infrastructure.Models;
 using AuthService.Infrastructure.Repositories;
+using AuthService.Api.Consumers;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
@@ -57,6 +59,16 @@ builder.Services.AddSwaggerGen(c =>
 builder.Services.AddDbContext<AuthDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+// RabbitMQ producer
+builder.Services.AddSingleton<IEventProducer>(sp =>
+{
+    var config = sp.GetRequiredService<IConfiguration>();
+    var host = config["RabbitMq:Host"] ?? "rabbitmq";
+    var user = config["RabbitMq:User"] ?? "guest";
+    var password = config["RabbitMq:Password"] ?? "guest";
+    return new RabbitMqProducer(host, user, password);
+});
+
 // DI
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<RegisterHandler>();
@@ -66,6 +78,10 @@ builder.Services.AddScoped<UserManagementHandler>();
 builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
 builder.Services.AddTransient<ExceptionMiddleware>();
 
+// RabbitMQ Consumers
+builder.Services.AddHostedService<UserPasswordChangedConsumer>();
+builder.Services.AddHostedService<UserProfileUpdatedConsumer>();
+builder.Services.AddHostedService<UserProfileSyncRequestedConsumer>();
 
 // JWT
 var key = builder.Configuration["Jwt:Key"]!;
