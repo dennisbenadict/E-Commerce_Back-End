@@ -97,6 +97,29 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidAudience = builder.Configuration["Jwt:Audience"]!,
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key))
         };
+        
+        // Read token from cookie if not in Authorization header
+        options.Events = new JwtBearerEvents
+        {
+            OnMessageReceived = context =>
+            {
+                // First try to get token from Authorization header
+                var token = context.Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
+                
+                // If not in header, try to get from cookie
+                if (string.IsNullOrEmpty(token))
+                {
+                    token = context.Request.Cookies["access_token"];
+                }
+                
+                if (!string.IsNullOrEmpty(token))
+                {
+                    context.Token = token;
+                }
+                
+                return Task.CompletedTask;
+            }
+        };
     });
 
 // after builder.Services.AddAuthentication(...)

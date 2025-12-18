@@ -61,6 +61,29 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidAudience = jwtAudience,
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey))
         };
+        
+        // Read token from cookie if not in Authorization header
+        options.Events = new JwtBearerEvents
+        {
+            OnMessageReceived = context =>
+            {
+                // First try to get token from Authorization header
+                var token = context.Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
+                
+                // If not in header, try to get from cookie
+                if (string.IsNullOrEmpty(token))
+                {
+                    token = context.Request.Cookies["access_token"];
+                }
+                
+                if (!string.IsNullOrEmpty(token))
+                {
+                    context.Token = token;
+                }
+                
+                return Task.CompletedTask;
+            }
+        };
     });
 
 builder.Services.AddAuthorization(options =>
@@ -78,9 +101,10 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", policy =>
     {
-        policy.AllowAnyOrigin()
+        policy.WithOrigins("http://localhost:4200", "http://localhost:57654") // Add your frontend URLs
               .AllowAnyMethod()
-              .AllowAnyHeader();
+              .AllowAnyHeader()
+              .AllowCredentials(); // Required for cookies
     });
 });
 

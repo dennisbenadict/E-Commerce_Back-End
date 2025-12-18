@@ -280,6 +280,7 @@ public class AuthController : ControllerBase
 
         var (rawRefresh, refreshEntity) = await _refreshService.CreateRefreshTokenAsync(user.Id);
 
+        // Set refresh token in HTTP-only cookie
         Response.Cookies.Append("refresh_token", rawRefresh, new CookieOptions
         {
             HttpOnly = true,
@@ -289,10 +290,19 @@ public class AuthController : ControllerBase
             Path = "/"
         });
 
+        // Set access token in HTTP-only cookie
+        Response.Cookies.Append("access_token", accessToken, new CookieOptions
+        {
+            HttpOnly = true,
+            Secure = true,
+            SameSite = SameSiteMode.None,
+            Expires = DateTime.UtcNow.AddMinutes(15),
+            Path = "/"
+        });
+
         return Ok(new
         {
-            message = "Login successful",
-            accessToken
+            message = "Login successful"
         });
     }
 
@@ -320,6 +330,7 @@ public class AuthController : ControllerBase
 
         var newAccess = _tokenService.GenerateToken(user.Id, user.Email, user.IsAdmin);
 
+        // Set new refresh token in HTTP-only cookie
         Response.Cookies.Append("refresh_token", newRaw, new CookieOptions
         {
             HttpOnly = true,
@@ -329,10 +340,19 @@ public class AuthController : ControllerBase
             Path = "/"
         });
 
+        // Set new access token in HTTP-only cookie
+        Response.Cookies.Append("access_token", newAccess, new CookieOptions
+        {
+            HttpOnly = true,
+            Secure = true,
+            SameSite = SameSiteMode.None,
+            Expires = DateTime.UtcNow.AddMinutes(15),
+            Path = "/"
+        });
+
         return Ok(new
         {
-            message = "Token refreshed",
-            accessToken = newAccess
+            message = "Token refreshed"
         });
     }
 
@@ -350,14 +370,26 @@ public class AuthController : ControllerBase
             if (existing != null && existing.IsActive)
                 await _refreshService.RevokeAsync(existing);
 
+            // Clear refresh token cookie
             Response.Cookies.Append("refresh_token", "", new CookieOptions
             {
                 HttpOnly = true,
-                Secure = false,
+                Secure = true,
+                SameSite = SameSiteMode.None,
                 Expires = DateTime.UtcNow.AddDays(-1),
-                Path = "/api/auth/refresh"
+                Path = "/"
             });
         }
+
+        // Clear access token cookie
+        Response.Cookies.Append("access_token", "", new CookieOptions
+        {
+            HttpOnly = true,
+            Secure = true,
+            SameSite = SameSiteMode.None,
+            Expires = DateTime.UtcNow.AddDays(-1),
+            Path = "/"
+        });
 
         return Ok(new { message = "Logged out successfully" });
     }

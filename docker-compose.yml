@@ -108,6 +108,18 @@ services:
     networks:
       - ecommerce-net
 
+  frontend:
+    build:
+      context: ../../../.vscode/E-Commerce/ecommerce
+      dockerfile: Dockerfile
+    container_name: frontend
+    depends_on:
+      - gateway
+    ports:
+      - "4200:80"
+    networks:
+      - ecommerce-net
+
 networks:
   ecommerce-net:
     driver: bridge
