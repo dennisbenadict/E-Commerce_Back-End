@@ -1,0 +1,46 @@
+version: "3.9"
+
+services:
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    networks:
+      - ecommerce-net
+
+  authservice:
+    image: <ECR_URL>/authservice:latest
+    container_name: authservice
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+    networks:
+      - ecommerce-net
+
+  userservice:
+    image: <ECR_URL>/userservice:latest
+    container_name: userservice
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+    networks:
+      - ecommerce-net
+
+  productservice:
+    image: <ECR_URL>/productservice:latest
+    container_name: productservice
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+    networks:
+      - ecommerce-net
+
+  gateway:
+    image: <ECR_URL>/gateway:latest
+    container_name: gateway
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+    ports:
+      - "80:8080"
+    networks:
+      - ecommerce-net
+
+networks:
+  ecommerce-net:
+    driver: bridge

@@ -126,6 +126,3 @@ networks:
 
 volumes:
   sql_data:
-
-
-
