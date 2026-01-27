@@ -8,7 +8,7 @@ services:
       - ecommerce-net
 
   authservice:
-    image: <ECR_URL>/authservice:latest
+    image: 257016720789.dkr.ecr.ap-south-1.amazonaws.com/authservice:latest
     container_name: authservice
     environment:
       ASPNETCORE_ENVIRONMENT: Production
@@ -16,7 +16,7 @@ services:
       - ecommerce-net
 
   userservice:
-    image: <ECR_URL>/userservice:latest
+    image: 257016720789.dkr.ecr.ap-south-1.amazonaws.com/userservice:latest
     container_name: userservice
     environment:
       ASPNETCORE_ENVIRONMENT: Production
@@ -24,7 +24,7 @@ services:
       - ecommerce-net
 
   productservice:
-    image: <ECR_URL>/productservice:latest
+    image: 257016720789.dkr.ecr.ap-south-1.amazonaws.com/productservice:latest
     container_name: productservice
     environment:
       ASPNETCORE_ENVIRONMENT: Production
@@ -32,7 +32,7 @@ services:
       - ecommerce-net
 
   gateway:
-    image: <ECR_URL>/gateway:latest
+    image: 257016720789.dkr.ecr.ap-south-1.amazonaws.com/gateway:latest
     container_name: gateway
     environment:
       ASPNETCORE_ENVIRONMENT: Production

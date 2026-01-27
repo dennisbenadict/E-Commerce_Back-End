@@ -99,14 +99,20 @@ builder.Services.AddAuthorization(options =>
 // CORS
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowAll", policy =>
+    options.AddPolicy("AllowFrontend", policy =>
     {
-        policy.WithOrigins("http://localhost:4200", "http://localhost:57654") // Add your frontend URLs
-              .AllowAnyMethod()
-              .AllowAnyHeader()
-              .AllowCredentials(); // Required for cookies
+        policy
+            .WithOrigins(
+                "http://localhost:4200",
+                "http://localhost:57654",
+                "https://vintagely.app.dennisbenadict.xyz"
+            )
+            .AllowAnyMethod()
+            .AllowAnyHeader()
+            .AllowCredentials();
     });
 });
+
 
 // YARP Reverse Proxy
 builder.Services.AddReverseProxy()
@@ -126,7 +132,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-app.UseCors("AllowAll");
+app.UseCors("AllowFrontend");
 
 // Authentication & Authorization
 app.UseAuthentication();
