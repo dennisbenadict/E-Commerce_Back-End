@@ -8,6 +8,7 @@ on:
 env:
   AWS_REGION: ${{ vars.AWS_REGION }}
   AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
+  ECR_REGISTRY: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ vars.AWS_REGION }}.amazonaws.com
 
 jobs:
   build-and-push:
@@ -22,35 +23,51 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ env.AWS_REGION }}
+          aws-region: ${{ vars.AWS_REGION }}
 
       - name: Login to Amazon ECR
         uses: aws-actions/amazon-ecr-login@v2
 
-      # -------- AUTH SERVICE --------
+      # ---------------- AUTH SERVICE ----------------
       - name: Build and push AuthService
         run: |
-          docker build -t authservice ./AuthService/AuthService.Api
-          docker tag authservice:latest $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/authservice:latest
-          docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/authservice:latest
+          docker build \
+            -f AuthService/AuthService.Api/Dockerfile \
+            -t $ECR_REGISTRY/authservice:latest \
+            -t $ECR_REGISTRY/authservice:${{ github.sha }} \
+            .
+          docker push $ECR_REGISTRY/authservice:latest
+          docker push $ECR_REGISTRY/authservice:${{ github.sha }}
 
-      # -------- USER SERVICE --------
+      # ---------------- USER SERVICE ----------------
       - name: Build and push UserService
         run: |
-          docker build -t userservice ./UserService/UserService.Api
-          docker tag userservice:latest $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/userservice:latest
-          docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/userservice:latest
+          docker build \
+            -f UserService/UserService.Api/Dockerfile \
+            -t $ECR_REGISTRY/userservice:latest \
+            -t $ECR_REGISTRY/userservice:${{ github.sha }} \
+            .
+          docker push $ECR_REGISTRY/userservice:latest
+          docker push $ECR_REGISTRY/userservice:${{ github.sha }}
 
-      # -------- PRODUCT SERVICE --------
+      # ---------------- PRODUCT SERVICE ----------------
       - name: Build and push ProductService
         run: |
-          docker build -t productservice ./ProductService/ProductService.Api
-          docker tag productservice:latest $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/productservice:latest
-          docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/productservice:latest
+          docker build \
+            -f ProductService/ProductService.Api/Dockerfile \
+            -t $ECR_REGISTRY/productservice:latest \
+            -t $ECR_REGISTRY/productservice:${{ github.sha }} \
+            .
+          docker push $ECR_REGISTRY/productservice:latest
+          docker push $ECR_REGISTRY/productservice:${{ github.sha }}
 
-      # -------- GATEWAY --------
+      # ---------------- GATEWAY ----------------
       - name: Build and push Gateway
         run: |
-          docker build -t gateway ./Gateway/Gateway.Api
-          docker tag gateway:latest $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/gateway:latest
-          docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/gateway:latest
+          docker build \
+            -f Gateway/Gateway.Api/Dockerfile \
+            -t $ECR_REGISTRY/gateway:latest \
+            -t $ECR_REGISTRY/gateway:${{ github.sha }} \
+            .
+          docker push $ECR_REGISTRY/gateway:latest
+          docker push $ECR_REGISTRY/gateway:${{ github.sha }}
