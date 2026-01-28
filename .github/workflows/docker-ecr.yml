@@ -1,4 +1,4 @@
-name: Build and Push Docker Images to ECR
+name: Build, Push and Deploy Docker Images to ECR & EC2
 
 on:
   push:
@@ -11,7 +11,7 @@ env:
   ECR_REGISTRY: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.ap-south-1.amazonaws.com
 
 jobs:
-  build-and-push:
+  build-and-deploy:
     runs-on: ubuntu-latest
 
     steps:
@@ -31,39 +31,55 @@ jobs:
       # ---------- AUTH SERVICE ----------
       - name: Build and push AuthService
         run: |
-          echo "Debugging ECR_REGISTRY variable:"
-          echo "AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}"
-          echo "ECR_REGISTRY: $ECR_REGISTRY"
-          docker build -f AuthService/AuthService.Api/Dockerfile -t $ECR_REGISTRY/authservice:latest -t $ECR_REGISTRY/authservice:${{ github.sha }} .
+          docker build \
+            -f AuthService/AuthService.Api/Dockerfile \
+            -t $ECR_REGISTRY/authservice:latest \
+            -t $ECR_REGISTRY/authservice:${{ github.sha }} \
+            .
           docker push $ECR_REGISTRY/authservice:latest
           docker push $ECR_REGISTRY/authservice:${{ github.sha }}
 
       # ---------- USER SERVICE ----------
       - name: Build and push UserService
         run: |
-          echo "Debugging ECR_REGISTRY variable:"
-          echo "AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}"
-          echo "ECR_REGISTRY: $ECR_REGISTRY"
-          docker build -f UserService/UserService.Api/Dockerfile -t $ECR_REGISTRY/userservice:latest -t $ECR_REGISTRY/userservice:${{ github.sha }} .
+          docker build \
+            -f UserService/UserService.Api/Dockerfile \
+            -t $ECR_REGISTRY/userservice:latest \
+            -t $ECR_REGISTRY/userservice:${{ github.sha }} \
+            .
           docker push $ECR_REGISTRY/userservice:latest
           docker push $ECR_REGISTRY/userservice:${{ github.sha }}
 
       # ---------- PRODUCT SERVICE ----------
       - name: Build and push ProductService
         run: |
-          echo "Debugging ECR_REGISTRY variable:"
-          echo "AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}"
-          echo "ECR_REGISTRY: $ECR_REGISTRY"
-          docker build -f ProductService/ProductService.Api/Dockerfile -t $ECR_REGISTRY/productservice:latest -t $ECR_REGISTRY/productservice:${{ github.sha }} .
+          docker build \
+            -f ProductService/ProductService.Api/Dockerfile \
+            -t $ECR_REGISTRY/productservice:latest \
+            -t $ECR_REGISTRY/productservice:${{ github.sha }} \
+            .
           docker push $ECR_REGISTRY/productservice:latest
           docker push $ECR_REGISTRY/productservice:${{ github.sha }}
 
       # ---------- GATEWAY ----------
       - name: Build and push Gateway
         run: |
-          echo "Debugging ECR_REGISTRY variable:"
-          echo "AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}"
-          echo "ECR_REGISTRY: $ECR_REGISTRY"
-          docker build -f Gateway/Gateway.Api/Dockerfile -t $ECR_REGISTRY/gateway:latest -t $ECR_REGISTRY/gateway:${{ github.sha }} .
+          docker build \
+            -f Gateway/Gateway.Api/Dockerfile \
+            -t $ECR_REGISTRY/gateway:latest \
+            -t $ECR_REGISTRY/gateway:${{ github.sha }} \
+            .
           docker push $ECR_REGISTRY/gateway:latest
           docker push $ECR_REGISTRY/gateway:${{ github.sha }}
+
+      # ---------- DEPLOY TO EC2 ----------
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            cd ~/ecommerce
+            docker compose -f docker-compose.prod.yml pull
+            docker compose -f docker-compose.prod.yml up -d
