@@ -28,46 +28,46 @@ jobs:
       - name: Login to Amazon ECR
         uses: aws-actions/amazon-ecr-login@v2
 
-        # ================= AUTH SERVICE =================
+      # -------- AUTH SERVICE --------
       - name: Build and push AuthService
         run: |
           docker build \
-            -f AuthService/AuthService.Api/Dockerfile \
             -t $ECR_REGISTRY/authservice:latest \
             -t $ECR_REGISTRY/authservice:${{ github.sha }} \
-            .
+            -f Dockerfile \
+            AuthService/AuthService.Api
           docker push $ECR_REGISTRY/authservice:latest
           docker push $ECR_REGISTRY/authservice:${{ github.sha }}
 
-      # ================= USER SERVICE =================
+      # -------- USER SERVICE --------
       - name: Build and push UserService
         run: |
           docker build \
-            -f UserService/UserService.Api/Dockerfile \
             -t $ECR_REGISTRY/userservice:latest \
             -t $ECR_REGISTRY/userservice:${{ github.sha }} \
-            .
+            -f Dockerfile \
+            UserService/UserService.Api
           docker push $ECR_REGISTRY/userservice:latest
           docker push $ECR_REGISTRY/userservice:${{ github.sha }}
 
-      # ================= PRODUCT SERVICE =================
+      # -------- PRODUCT SERVICE --------
       - name: Build and push ProductService
         run: |
           docker build \
-            -f ProductService/ProductService.Api/Dockerfile \
             -t $ECR_REGISTRY/productservice:latest \
             -t $ECR_REGISTRY/productservice:${{ github.sha }} \
-            .
+            -f Dockerfile \
+            ProductService/ProductService.Api
           docker push $ECR_REGISTRY/productservice:latest
           docker push $ECR_REGISTRY/productservice:${{ github.sha }}
 
-      # ================= GATEWAY =================
+      # -------- GATEWAY --------
       - name: Build and push Gateway
         run: |
           docker build \
-            -f Gateway/Gateway.Api/Dockerfile \
             -t $ECR_REGISTRY/gateway:latest \
             -t $ECR_REGISTRY/gateway:${{ github.sha }} \
-            .
+            -f Dockerfile \
+            Gateway/Gateway.Api
           docker push $ECR_REGISTRY/gateway:latest
           docker push $ECR_REGISTRY/gateway:${{ github.sha }}
