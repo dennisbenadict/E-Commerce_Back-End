@@ -31,28 +31,44 @@ jobs:
       # ---------- AUTH SERVICE ----------
       - name: Build and push AuthService
         run: |
-          bash -c "docker build -f AuthService/AuthService.Api/Dockerfile -t $ECR_REGISTRY/authservice:latest -t $ECR_REGISTRY/authservice:${{ github.sha }} AuthService/AuthService.Api"
+          echo "Debugging ECR_REGISTRY variable:"
+          echo "AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}"
+          echo "ECR_REGISTRY: $ECR_REGISTRY"
+          cd AuthService/AuthService.Api
+          docker build -f Dockerfile -t $ECR_REGISTRY/authservice:latest -t $ECR_REGISTRY/authservice:${{ github.sha }} .
           docker push $ECR_REGISTRY/authservice:latest
           docker push $ECR_REGISTRY/authservice:${{ github.sha }}
 
       # ---------- USER SERVICE ----------
       - name: Build and push UserService
         run: |
-          bash -c "docker build -f UserService/UserService.Api/Dockerfile -t $ECR_REGISTRY/userservice:latest -t $ECR_REGISTRY/userservice:${{ github.sha }} UserService/UserService.Api"
+          echo "Debugging ECR_REGISTRY variable:"
+          echo "AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}"
+          echo "ECR_REGISTRY: $ECR_REGISTRY"
+          cd UserService/UserService.Api
+          docker build -f Dockerfile -t $ECR_REGISTRY/userservice:latest -t $ECR_REGISTRY/userservice:${{ github.sha }} .
           docker push $ECR_REGISTRY/userservice:latest
           docker push $ECR_REGISTRY/userservice:${{ github.sha }}
 
       # ---------- PRODUCT SERVICE ----------
       - name: Build and push ProductService
         run: |
-          bash -c "docker build -f ProductService/ProductService.Api/Dockerfile -t $ECR_REGISTRY/productservice:latest -t $ECR_REGISTRY/productservice:${{ github.sha }} ProductService/ProductService.Api"
+          echo "Debugging ECR_REGISTRY variable:"
+          echo "AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}"
+          echo "ECR_REGISTRY: $ECR_REGISTRY"
+          cd ProductService/ProductService.Api
+          docker build -f Dockerfile -t $ECR_REGISTRY/productservice:latest -t $ECR_REGISTRY/productservice:${{ github.sha }} .
           docker push $ECR_REGISTRY/productservice:latest
           docker push $ECR_REGISTRY/productservice:${{ github.sha }}
 
       # ---------- GATEWAY ----------
       - name: Build and push Gateway
         run: |
-          bash -c "docker build -f Gateway/Gateway.Api/Dockerfile -t $ECR_REGISTRY/gateway:latest -t $ECR_REGISTRY/gateway:${{ github.sha }} Gateway/Gateway.Api"
+          echo "Debugging ECR_REGISTRY variable:"
+          echo "AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}"
+          echo "ECR_REGISTRY: $ECR_REGISTRY"
+          cd Gateway/Gateway.Api
+          docker build -f Dockerfile -t $ECR_REGISTRY/gateway:latest -t $ECR_REGISTRY/gateway:${{ github.sha }} .
           docker push $ECR_REGISTRY/gateway:latest
           docker push $ECR_REGISTRY/gateway:${{ github.sha }}
 
