@@ -30,25 +30,29 @@ jobs:
 
       # ---------- AUTH SERVICE ----------
       - name: Build and push AuthService
-        run: docker build -f AuthService/AuthService.Api/Dockerfile -t $ECR_REGISTRY/authservice:latest -t $ECR_REGISTRY/authservice:${{ github.sha }} AuthService/AuthService.Api
+        run: |
+          docker build -f AuthService/AuthService.Api/Dockerfile -t $ECR_REGISTRY/authservice:latest -t $ECR_REGISTRY/authservice:${{ github.sha }} AuthService/AuthService.Api
           docker push $ECR_REGISTRY/authservice:latest
           docker push $ECR_REGISTRY/authservice:${{ github.sha }}
 
       # ---------- USER SERVICE ----------
       - name: Build and push UserService
-        run: docker build -f UserService/UserService.Api/Dockerfile -t $ECR_REGISTRY/userservice:latest -t $ECR_REGISTRY/userservice:${{ github.sha }} UserService/UserService.Api
+        run: |
+          docker build -f UserService/UserService.Api/Dockerfile -t $ECR_REGISTRY/userservice:latest -t $ECR_REGISTRY/userservice:${{ github.sha }} UserService/UserService.Api
           docker push $ECR_REGISTRY/userservice:latest
           docker push $ECR_REGISTRY/userservice:${{ github.sha }}
 
       # ---------- PRODUCT SERVICE ----------
       - name: Build and push ProductService
-        run: docker build -f ProductService/ProductService.Api/Dockerfile -t $ECR_REGISTRY/productservice:latest -t $ECR_REGISTRY/productservice:${{ github.sha }} ProductService/ProductService.Api
+        run: |
+          docker build -f ProductService/ProductService.Api/Dockerfile -t $ECR_REGISTRY/productservice:latest -t $ECR_REGISTRY/productservice:${{ github.sha }} ProductService/ProductService.Api
           docker push $ECR_REGISTRY/productservice:latest
           docker push $ECR_REGISTRY/productservice:${{ github.sha }}
 
       # ---------- GATEWAY ----------
       - name: Build and push Gateway
-        run: docker build -f Gateway/Gateway.Api/Dockerfile -t $ECR_REGISTRY/gateway:latest -t $ECR_REGISTRY/gateway:${{ github.sha }} Gateway/Gateway.Api
+        run: |
+          docker build -f Gateway/Gateway.Api/Dockerfile -t $ECR_REGISTRY/gateway:latest -t $ECR_REGISTRY/gateway:${{ github.sha }} Gateway/Gateway.Api
           docker push $ECR_REGISTRY/gateway:latest
           docker push $ECR_REGISTRY/gateway:${{ github.sha }}
 
