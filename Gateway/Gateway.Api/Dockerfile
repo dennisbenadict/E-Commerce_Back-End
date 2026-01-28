@@ -2,13 +2,12 @@
 FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 WORKDIR /src
 
-# Copy csproj and restore dependencies (paths are relative to the *root of the build context*)
-# The build context is 'Gateway/Gateway.Api'
-COPY Gateway.Api.csproj Gateway.Api/
-RUN dotnet restore Gateway.Api/Gateway.Api.csproj
+# Copy csproj and restore dependencies
+COPY Gateway/Gateway.Api/Gateway.Api.csproj Gateway/Gateway.Api/
+RUN dotnet restore Gateway/Gateway.Api/Gateway.Api.csproj
 
 # Copy everything else and build
-COPY . ./Gateway.Api/ # Copy current directory (Gateway.Api) into Gateway.Api folder in container
+COPY Gateway/Gateway.Api/ Gateway/Gateway.Api/
 WORKDIR /src/Gateway/Gateway.Api
 RUN dotnet publish -c Release -o /app/publish
 
