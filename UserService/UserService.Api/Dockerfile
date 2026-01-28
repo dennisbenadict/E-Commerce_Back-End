@@ -4,19 +4,20 @@
 FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 WORKDIR /src
 
-# Copy only project files
-COPY UserService/UserService.Api/UserService.Api.csproj UserService.Api/
-COPY UserService/UserService.Application/UserService.Application.csproj UserService.Application/
-COPY UserService/UserService.Infrastructure/UserService.Infrastructure.csproj UserService.Infrastructure/
-COPY UserService/UserService.Domain/UserService.Domain.csproj UserService.Domain/
+# Copy only project files (paths are relative to the *root of the build context*)
+# The build context is 'UserService/UserService.Api'
+COPY UserService.Api.csproj UserService.Api/
+COPY ../UserService.Application/UserService.Application.csproj UserService.Application/
+COPY ../UserService.Infrastructure/UserService.Infrastructure.csproj UserService.Infrastructure/
+COPY ../UserService.Domain/UserService.Domain.csproj UserService.Domain/
 
 RUN dotnet restore UserService.Api/UserService.Api.csproj
 
 # Copy full source of UserService ONLY
-COPY UserService/UserService.Api/ UserService.Api/
-COPY UserService/UserService.Application/ UserService.Application/
-COPY UserService/UserService.Infrastructure/ UserService.Infrastructure/
-COPY UserService/UserService.Domain/ UserService.Domain/
+COPY . ./UserService.Api/ # Copy current directory (UserService.Api) into UserService.Api folder in container
+COPY ../UserService.Application/ ./UserService.Application/
+COPY ../UserService.Infrastructure/ ./UserService.Infrastructure/
+COPY ../UserService.Domain/ ./UserService.Domain/
 
 WORKDIR /src/UserService.Api
 RUN dotnet publish -c Release -o /app/publish

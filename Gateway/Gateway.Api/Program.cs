@@ -101,17 +101,17 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
     {
-        policy
-            .WithOrigins(
+        policy.WithOrigins(
                 "http://localhost:4200",
                 "http://localhost:57654",
                 "https://vintagely.app.dennisbenadict.xyz"
             )
-            .AllowAnyMethod()
             .AllowAnyHeader()
+            .AllowAnyMethod()
             .AllowCredentials();
     });
 });
+
 
 
 // YARP Reverse Proxy
